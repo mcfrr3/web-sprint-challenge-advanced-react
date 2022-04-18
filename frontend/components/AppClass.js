@@ -91,8 +91,8 @@ export default class AppClass extends React.Component {
     grid.forEach((row, rowIdx) => {
       row.forEach((space, colIdx) => {
         if (space) {
-          x = rowIdx;
-          y = colIdx;
+          x = colIdx;
+          y = rowIdx;
         }
       })
     });
@@ -111,10 +111,13 @@ export default class AppClass extends React.Component {
 
   render() {
     const { className } = this.props
+    const [x, y] = this.getActiveCoordinate(this.state.grid);
     return (
       <div id="wrapper" className={className}>
         <div className="info">
-          <h3 id="coordinates">Coordinates (2, 2)</h3>
+          <h3 id="coordinates">
+            Coordinates ({x}, {y})
+          </h3>
           <h3 id="steps">You moved { this.state.steps } times</h3>
         </div>
         <div id="grid">
