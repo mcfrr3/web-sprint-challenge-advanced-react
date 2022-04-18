@@ -1,4 +1,5 @@
 import React from 'react'
+import axios from 'axios';
 
 export default class AppClass extends React.Component {
   initialGrid = [['', '', ''], ['', "B", ''], ['', '', '']];
@@ -15,7 +16,6 @@ export default class AppClass extends React.Component {
     // Set state
     const direction = evt.target.id
     const newCoords = this.calculateUpdatedCoords(direction);
-    console.log(newCoords);
 
     if (!this.isInBounds(newCoords[0], newCoords[1])) {
       this.setState({
@@ -35,11 +35,35 @@ export default class AppClass extends React.Component {
   }
 
   handleTyping = evt => {
-    console.log(evt);
     this.setState({
       ...this.state,
       email: evt.target.value
     });
+  }
+
+  handleSubmit = evt => {
+    evt.preventDefault();
+    const [x, y] = this.getActiveCoordinate(this.state.grid);
+    const postPackage = {
+      "x": x,
+      "y": y,
+      "steps": this.state.steps,
+      "email": this.state.email
+    }
+    axios.post("http://localhost:9000/api/result", postPackage)
+      .then(res => {
+        this.setState({
+          ...this.state,
+          message: res.data.message,
+          email: ""
+        });
+      })
+      .catch(err => {
+        this.setState({
+          ...this.state,
+          message: err.response.data.message,
+        });
+      })
   }
 
   isInBounds = (x, y) => {
@@ -64,8 +88,6 @@ export default class AppClass extends React.Component {
       default:
         break;
     }
-    console.log("direction: ", direction);
-    console.log("new coords: ", x, y);
     return [x, y];
   }
 
@@ -74,8 +96,6 @@ export default class AppClass extends React.Component {
 
     this.initialGrid.forEach((row, rowIdx) => {
       row.forEach((space, colIdx) => {
-        console.log("rowIdx, colIdx: ", rowIdx, colIdx);
-        console.log("newCoords: ", newCoords);
         newGrid[rowIdx][colIdx] = 
           (newCoords[1] - 1 === rowIdx && newCoords[0] - 1 === colIdx) 
           ? 'B'
@@ -96,7 +116,6 @@ export default class AppClass extends React.Component {
         }
       })
     });
-    console.log("getActiveCoord: ", x, y);
     return [x + 1, y + 1];
   }
 
@@ -118,10 +137,11 @@ export default class AppClass extends React.Component {
           <h3 id="coordinates">
             Coordinates ({x}, {y})
           </h3>
-          <h3 id="steps">You moved { this.state.steps } times</h3>
+          <h3 id="steps">
+            You moved { this.state.steps } time{this.state.steps === 1 ? "" : "s"}
+          </h3>
         </div>
         <div id="grid">
-          {/* Create a loop here? */}
           {
             this.state.grid.map((row, rowIdx) => {
               return row.map((space, colIdx) => {
@@ -144,10 +164,16 @@ export default class AppClass extends React.Component {
           <button onClick={this.handleMove} id="up">UP</button>
           <button onClick={this.handleMove} id="right">RIGHT</button>
           <button onClick={this.handleMove} id="down">DOWN</button>
-          <button id="reset">reset</button>
+          <button onClick={this.resetState} id="reset">reset</button>
         </div>
-        <form>
-          <input onChange={this.handleTyping} id="email" type="email" placeholder="type email" />
+        <form onSubmit={this.handleSubmit}>
+          <input 
+            onChange={this.handleTyping} 
+            value={this.state.email}
+            id="email" 
+            type="email" 
+            placeholder="type email" 
+          />
           <input id="submit" type="submit" />
         </form>
       </div>
